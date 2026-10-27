@@ -1,0 +1,60 @@
+// Separate verification mod and production launcher. Neither is part of the published mod jar.
+dependencies {
+    productionRuntimeMods "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+tasks.register('verificationJar', Jar) {
+    archiveClassifier = 'verification'
+    from sourceSets.gametest.output
+}
+
+// Keep graphics smoke tests independent of display refresh/VSync waits on macOS.
+// This changes only the disposable test client's options, never the player's installation.
+tasks.named('runClientGameTest') {
+    doFirst {
+        def optionsFile = layout.buildDirectory.file('run/clientGameTest/options.txt').get().asFile
+        optionsFile.parentFile.mkdirs()
+        def options = optionsFile.exists() ? optionsFile.getText('UTF-8') : ''
+        if (options.contains('enableVsync:')) {
+            options = options.replaceAll('(?m)^enableVsync:.*$', 'enableVsync:false')
+        } else {
+            options += '\nenableVsync:false\n'
+        }
+        optionsFile.setText(options, 'UTF-8')
+    }
+}
+
+// Applied scripts have a separate compile classpath; load the task type from Loom's plugin classloader.
+def productionServerTaskType = plugins.getPlugin('net.fabricmc.fabric-loom').class.classLoader
+        .loadClass('net.fabricmc.loom.task.prod.ServerProductionRunTask')
+tasks.register('productionServerSmoke', productionServerTaskType) {
+    // Verified against https://meta.fabricmc.net/v2/versions/installer on 2026-10-27.
+    installerVersion = '1.1.2'
+    mods.from tasks.named('verificationJar')
+    runDir = file(providers.gradleProperty('smokeRunDir').getOrElse('.local/production-smoke-v031'))
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
+    jvmArgs.add(providers.gradleProperty('restartPhase').map { "-Dblockbill.restartPhase=${it}" })
+    doFirst {
+        def phase = providers.gradleProperty('restartPhase').getOrElse('')
+        if (!(phase in ['write', 'read'])) throw new GradleException('Use -PrestartPhase=write or -PrestartPhase=read')
+        def smokeDir = runDir.get().asFile
+        smokeDir.mkdirs()
+        // Local synthetic world only, listening on loopback. No public multiplayer endpoint.
+        new File(smokeDir, 'eula.txt').text = 'eula=true\n'
+        new File(smokeDir, 'server.properties').text = '''server-ip=127.0.0.1
+server-port=25576
+online-mode=false
+enforce-secure-profile=false
+max-players=1
+level-name=blockbill-verification
+level-type=minecraft:flat
+generate-structures=false
+view-distance=2
+simulation-distance=2
+spawn-protection=0
+difficulty=peaceful
+motd=BlockBill synthetic restart verification
+'''
+        new File(smokeDir, "${phase}-success.json").delete()
+    }
+}

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Установка BlockBill 0.3.1 для Minecraft Java 26.3: Fabric, правила подписок, команды и первые шаги.">
+  <title>BlockBill — установка и правила</title>
+  <style>
+    :root{--paper:#f5f3eb;--ink:#172b33;--muted:#53656b;--line:#d7ddd5;--card:#fffef8;--accent:#ffc857;--green:#1f6555;--radius:18px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:var(--green);text-underline-offset:4px}a:hover{text-decoration-thickness:2px}a:focus-visible,summary:focus-visible{outline:3px solid var(--green);outline-offset:5px}
+    .wrap{max-width:1060px;margin:auto;padding:0 28px}.masthead{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:24px;padding-bottom:24px;border-bottom:1px solid var(--line)}.brand{font-weight:900;letter-spacing:-1px;font-size:25px;text-decoration:none;color:var(--ink)}.tag{font-size:12px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted)}
+    .hero{padding:60px 0 38px}.eyebrow{margin:0 0 12px;color:var(--green);font-size:13px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}h1{font-size:clamp(40px,6.5vw,68px);line-height:1.05;letter-spacing:-2.5px;max-width:850px;margin:0 0 24px}h2{font-size:30px;line-height:1.2;letter-spacing:-.7px;margin:0 0 20px}h3{font-size:19px;line-height:1.35;margin:0 0 8px}p{margin:0 0 16px}.lead{font-size:21px;max-width:740px;color:var(--muted)}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0}.chip{padding:6px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-size:13px;font-weight:650}.nav{display:flex;gap:10px 24px;flex-wrap:wrap;padding:18px 0;border-top:1px solid var(--line);font-size:15px;font-weight:650}
+    section{padding:40px 0;border-top:1px solid var(--line);scroll-margin-top:20px}.intro-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:24px}.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}.dark{background:var(--ink);color:#fff;border:0}.dark a{color:var(--accent)}.dark .muted{color:#c4d3d3}.dark code{background:#ffffff14;color:#fff}.label{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}.dark .label{color:var(--accent)}.muted{color:var(--muted)}.small{font-size:14px}.notice{padding:16px 20px;border-left:4px solid var(--green);background:#e9f0e8;border-radius:0 12px 12px 0}.notice p:last-child,.panel p:last-child{margin-bottom:0}
+    ol.steps{list-style:none;counter-reset:step;padding:0;margin:0}ol.steps>li{counter-increment:step;position:relative;padding:4px 0 26px 58px}ol.steps>li:last-child{padding-bottom:0}ol.steps>li:before{content:counter(step);position:absolute;left:0;top:0;width:38px;height:38px;display:grid;place-items:center;background:var(--accent);border-radius:10px;font-weight:850}ol.steps p{margin-bottom:10px}.files{padding:16px 20px;background:var(--paper);border-radius:10px;margin:12px 0}.files a{display:block;overflow-wrap:anywhere}code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.88em;background:#e7ebe5;border-radius:4px;padding:2px 5px;overflow-wrap:anywhere}pre{padding:18px 20px;background:var(--ink);color:#fff;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;font-size:15px}pre code{background:none;color:inherit;padding:0}.table-wrap{overflow-x:auto;margin:20px 0}table{width:100%;border-collapse:collapse;text-align:left;font-size:15px}caption{text-align:left;font-weight:750;padding-bottom:12px}th{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);padding:12px 14px;border-bottom:2px solid var(--line)}td{padding:14px;border-bottom:1px solid var(--line);vertical-align:top}tbody tr:last-child td{border-bottom:0}td:first-child{font-weight:650}strong.price{white-space:nowrap}.columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}.rule{padding-bottom:18px}.rule:last-child{padding-bottom:0}.rule p{margin:0}.command{display:block;margin-bottom:6px}ul{padding-left:22px}li{margin-bottom:8px}details{border-bottom:1px solid var(--line);padding:17px 0}summary{font-weight:750;cursor:pointer;line-height:1.4}details p{margin:12px 0 0;padding-right:15px}.footer{padding:30px 0 48px;color:var(--muted);font-size:13px}.footer p{margin-bottom:8px}.skip{position:absolute;left:16px;top:-100px;background:var(--card);padding:10px;z-index:10}.skip:focus{top:10px}
+    @media(max-width:700px){body{font-size:16px}.wrap{padding:0 18px}.masthead{padding-top:18px;padding-bottom:18px}.masthead .tag{max-width:125px;text-align:right}.hero{padding:36px 0 24px}h1{letter-spacing:-1.7px}.lead{font-size:18px}.intro-grid,.columns{grid-template-columns:1fr}.panel{padding:20px}section{padding:30px 0}h2{font-size:26px}th,td{padding:10px 8px}.chips{gap:6px}.chip{font-size:12px}.nav{gap:8px 18px}.table-wrap{margin:12px 0}ol.steps>li{padding-left:48px}pre{font-size:13px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    @media print{body{background:#fff;color:#000;font-size:10pt;line-height:1.45}.wrap{max-width:none;padding:0}.masthead,.nav,.skip{display:none}.hero{padding:0 0 16px}h1{font-size:29pt;letter-spacing:-1px}.lead{font-size:12pt}.chips{margin:10px 0}.chip{background:#fff;padding:3px 8px}.panel,.dark,.notice,pre{background:#fff;color:#000;border:1px solid #bbb;box-shadow:none}.dark code,code{color:#000;background:#eee}.dark .label,.dark .muted,.dark a{color:#000}.intro-grid,.columns{display:block}.panel{padding:12px;margin-bottom:12px}.nav{display:none}section{padding:18px 0;break-inside:auto}h2,h3{break-after:avoid}table,pre,.rule,.notice{break-inside:avoid}h2{font-size:18pt}.table-wrap{overflow:visible}th,td{padding:7px}a{color:#000}details{break-inside:avoid}details::details-content{content-visibility:visible;display:block}.footer{padding:15px 0}pre{white-space:pre-wrap}}
+  </style>
+</head>
+<body>
+<a class="skip" href="#install">Перейти к установке</a>
+<div class="wrap">
+  <header class="masthead"><a class="brand" href="#top">BlockBill<span aria-hidden="true">.</span></a><span class="tag">Руководство игрока · 0.3.1</span></header>
+  <main id="top">
+    <div class="hero">
+      <p class="eyebrow">Minecraft, но мир работает по подписке</p>
+      <h1>Кирка есть.<br>А Mine+ оплачен?</h1>
+      <p class="lead">Собирай ресурсы, получай игровые кредиты и выбирай из девяти подписок: от шахты и сна до мастерской, торговли и рыбалки. Цель прежняя — победить Эндер-дракона. Реальных денег здесь нет.</p>
+      <div class="chips" aria-label="Совместимые версии"><span class="chip">Java Edition 26.3</span><span class="chip">Fabric Loader 0.20.1</span><span class="chip">Fabric API 0.165.0+26.3</span><span class="chip">Java 25+</span><span class="chip">9 услуг · 4 пакета · 3 тарифа</span></div>
+      <nav class="nav" aria-label="Содержание"><a href="#install">Установка</a><a href="#start">Первая покупка</a><a href="#prices">Цены</a><a href="#plans">Plus / Pro / Business</a><a href="#commands">Команды</a><a href="#autorenew">Автопродление</a><a href="#rules">Правила</a><a href="#faq">Вопросы</a></nav>
+    </div>
+
+    <section id="install" aria-labelledby="install-title">
+      <p class="eyebrow">01 / Подготовка</p><h2 id="install-title">Два файла — и можно играть</h2>
+      <div class="notice" style="margin-bottom:24px"><p><strong>Обновляешься с 0.1, 0.2 или 0.3.0?</strong> Сначала закрой игру и сервер и сделай копию всей папки мира. Замени старый JAR на 0.3.1; не оставляй две версии одновременно. Сохраняются баланс и оплаченные сроки, а из 0.2 и 0.3.0 — также настройки автопродления. Бесплатный период заново не начинается. Для возврата к прежней версии используй копию мира.</p><p><strong>Для игроков 0.1:</strong> прежние три услуги доступны в пакете <code>basic</code> за 40 кредитов. <code>all</code> включает девять и стоит 120. Дополнительные оплаченные услуги задним числом не выдаются; автопродление после обновления с 0.1 выключено.</p></div>
+      <div class="intro-grid">
+        <div>
+          <ol class="steps">
+            <li><h3>Подготовь Minecraft 26.3</h3><p>Нужна <strong>Minecraft Java Edition</strong>. Установи версию 26.3, один раз запусти её через лаунчер и закрой игру. Для запуска нужна Java 25 или новее; проверь выбранную Java, если используешь собственный лаунчер.</p></li>
+            <li><h3>Установи Fabric</h3><p>Скачай <a href="https://fabricmc.net/use/installer/">официальный Fabric Installer</a>. Выбери установку клиента: Minecraft <strong>26.3</strong>, Loader <strong>0.20.1</strong>. В лаунчере появится профиль Fabric.</p></li>
+            <li><h3>Положи оба JAR в папку mods</h3><p>Открой папку игры <strong>выбранного Fabric-профиля</strong>. Создай в ней <code>mods</code>, если папки ещё нет, и скопируй:</p><div class="files"><a href="https://github.com/Hasuk1/BlockBill/releases/download/v0.3.1/blockbill-0.3.1.jar" download>blockbill-0.3.1.jar</a><a href="https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/0.165.0+26.3/fabric-api-0.165.0+26.3.jar">fabric-api-0.165.0+26.3.jar</a></div><p class="small muted">Скачай JAR по ссылке выше или возьми его из <a href="https://github.com/Hasuk1/BlockBill/releases/download/v0.3.1/BlockBill-0.3.1.zip">комплекта BlockBill-0.3.1.zip</a>. Не распаковывай JAR и не используй файл <code>-sources.jar</code>. В комплекте лежит эта инструкция; Fabric API скачивается отдельно.</p></li>
+            <li><h3>Запусти профиль Fabric</h3><p>Для знакомства создай новый мир в режиме <strong>«Выживание»</strong>. Перед установкой в существующий мир сделай его резервную копию.</p></li>
+            <li><h3>Открой правила в инвентаре</h3><p>Нажми <strong>E → «Правила BlockBill»</strong> в правом верхнем углу. В чате введи <code>/blockbill status</code>: появятся баланс и сроки доступа.</p></li>
+          </ol>
+        </div>
+        <aside>
+          <div class="panel dark">
+            <p class="label">Где искать mods</p>
+            <h3>Windows</h3><p><code>%APPDATA%\.minecraft\mods</code></p>
+            <h3>macOS</h3><p><code>~/Library/Application Support/minecraft/mods</code></p>
+            <h3>Linux</h3><p><code>~/.minecraft/mods</code></p>
+            <p class="small muted">Это стандартные пути. Если у профиля отдельная папка игры, используй папку <code>mods</code> внутри неё. На macOS путь можно вставить в Finder → «Переход» → «Переход к папке».</p>
+          </div>
+          <div class="panel" style="margin-top:20px"><p class="label">Игра с друзьями</p><h3>Мод нужен обеим сторонам</h3><p>Установи BlockBill и Fabric API на Fabric-сервер и на каждый клиент. Версии Minecraft должны совпадать. Баланс и подписки у каждого игрока свои.</p><p class="small muted">Этот мод предназначен для Java Edition с Fabric. Bedrock, Forge и NeoForge не поддерживаются.</p></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="start" aria-labelledby="start-title">
+      <p class="eyebrow">02 / Первые шаги</p><h2 id="start-title">Сначала 32 бревна. Затем Mine+.</h2>
+      <div class="columns"><div><p>На старте все девять услуг доступны бесплатно примерно <strong>5 минут выживания</strong>. Собери 32 ванильных бревна — породы можно смешивать — и открой чат клавишей <strong>T</strong> или <strong>/</strong>.</p><pre><code>/blockbill exchange logs 2
+/blockbill buy mine
+/blockbill status</code></pre></div><div class="panel"><p class="label">Как считается покупка</p><p><strong>32 бревна → 24 кредита</strong><br>Mine+ стоит 20 кредитов.<br>После покупки останется <strong>4 кредита</strong>.</p><p>Mine+ добавит примерно 10 минут к текущему доступу. Если бесплатный период ещё идёт, оставшееся время сохранится.</p><p class="small muted">16 брёвен дают 12 кредитов. Этого на Mine+ не хватает: при попытке покупки деньги останутся на счёте.</p></div></div>
+    </section>
+
+    <section id="prices" aria-labelledby="prices-title">
+      <p class="eyebrow">03 / Тарифы</p><h2 id="prices-title">Что купить и чем заплатить</h2>
+      <p>Отдельная услуга или обычный пакет добавляет примерно <strong>10 минут</strong> игры в выживании. Тарифы Plus, Pro и Business добавляют 15, 30 и 60 минут соответственно. Каталог <code>/blockbill services</code> покажет девять услуг с правилами и командами, а <code>/blockbill prices</code> — все услуги, пакеты, тарифы и обмен.</p>
+      <div class="table-wrap"><table><caption>Подписки</caption><thead><tr><th scope="col">Услуга</th><th scope="col">Цена</th><th scope="col">Без доступа</th></tr></thead><tbody>
+        <tr><td>Mine+</td><td><strong class="price">20 кредитов</strong></td><td>Ниже Y40 действует Усталость I: добыча замедляется.</td></tr>
+        <tr><td>Sleep+</td><td><strong class="price">15 кредитов</strong></td><td>Нельзя заснуть и пропустить ночь.</td></tr>
+        <tr><td>Sprint+</td><td><strong class="price">15 кредитов</strong></td><td>После 6 секунд непрерывного бега — Замедление I на 4 секунды. Повторное наказание возможно не чаще раза в 8 секунд.</td></tr>
+        <tr><td>Enchant+<br><code>enchant</code></td><td><strong class="price">25 кредитов</strong></td><td>Нельзя открыть стол зачарования.</td></tr>
+        <tr><td>Anvil+<br><code>anvil</code></td><td><strong class="price">20 кредитов</strong></td><td>Нельзя открыть любую наковальню, в том числе повреждённую и разбитую.</td></tr>
+        <tr><td>Smith+<br><code>smith</code></td><td><strong class="price">20 кредитов</strong></td><td>Нельзя открыть кузнечный стол.</td></tr>
+        <tr><td>Trade+<br><code>trade</code></td><td><strong class="price">20 кредитов</strong></td><td>Нельзя начать торговлю со взрослым жителем или странствующим торговцем. Кормление и лечение других мобов остаются доступны.</td></tr>
+        <tr><td>Fish+<br><code>fish</code></td><td><strong class="price">15 кредитов</strong></td><td>Нельзя забросить удочку. Уже заброшенную удочку можно смотать после истечения.</td></tr>
+        <tr><td>Storage+<br><code>storage</code></td><td><strong class="price">15 кредитов</strong></td><td>Нельзя открыть эндер-сундук или шалкеровый ящик. Обычные сундуки и бочки бесплатны.</td></tr>
+      </tbody></table></div>
+      <div class="table-wrap"><table><caption>Пакеты: 10 минут каждой входящей услуге</caption><thead><tr><th scope="col">Пакет</th><th scope="col">Цена</th><th scope="col">Состав</th><th scope="col">Команда</th></tr></thead><tbody>
+        <tr><td>Базовый</td><td>40</td><td>Mine+, Sleep+, Sprint+</td><td><code>/blockbill buy basic</code></td></tr>
+        <tr><td>Мастерская</td><td>50</td><td>Enchant+, Anvil+, Smith+</td><td><code>/blockbill buy workshop</code></td></tr>
+        <tr><td>Исследователь</td><td>50</td><td>Mine+, Sprint+, Fish+, Storage+</td><td><code>/blockbill buy explorer</code></td></tr>
+        <tr><td>All Access</td><td>120</td><td>Все девять услуг</td><td><code>/blockbill buy all</code></td></tr>
+      </tbody></table></div>
+      <p class="small muted">При нехватке кредитов пакет не меняет ни одного срока. Пакеты автоматически не покупаются.</p>
+      <div class="table-wrap"><table><caption>Обмен одного набора ресурсов</caption><thead><tr><th scope="col">Ресурс</th><th scope="col">Имя в команде</th><th scope="col">Отдаёшь</th><th scope="col">Получаешь</th></tr></thead><tbody>
+        <tr><td>Ванильные брёвна</td><td><code>logs</code></td><td>16 шт.</td><td>12 кредитов</td></tr>
+        <tr><td>Булыжник</td><td><code>cobblestone</code></td><td>32 шт.</td><td>16 кредитов</td></tr>
+        <tr><td>Гнилая плоть</td><td><code>rotten_flesh</code></td><td>8 шт.</td><td>12 кредитов</td></tr>
+        <tr><td>Железные слитки</td><td><code>iron_ingot</code></td><td>4 шт.</td><td>36 кредитов</td></tr>
+        <tr><td>Уголь</td><td><code>coal</code></td><td>8 шт.</td><td>16 кредитов</td></tr>
+        <tr><td>Пшеница</td><td><code>wheat</code></td><td>16 шт.</td><td>12 кредитов</td></tr>
+        <tr><td>Медные слитки</td><td><code>copper_ingot</code></td><td>8 шт.</td><td>16 кредитов</td></tr>
+        <tr><td>Редстоун</td><td><code>redstone</code></td><td>16 шт.</td><td>20 кредитов</td></tr>
+        <tr><td>Золотые слитки</td><td><code>gold_ingot</code></td><td>4 шт.</td><td>32 кредита</td></tr>
+        <tr><td>Изумруд</td><td><code>emerald</code></td><td>1 шт.</td><td>28 кредитов</td></tr>
+      </tbody></table></div>
+      <div class="notice"><p><strong>Не хватает — ничего не списывается.</strong> Обмен использует личный инвентарь, включая вторую руку, но не сундуки. Число в конце команды — количество полных наборов: <code>logs 2</code> означает 32 бревна.</p></div>
+    </section>
+
+    <section id="plans" aria-labelledby="plans-title">
+      <p class="eyebrow">04 / Выбери длительность</p><h2 id="plans-title">Plus, Pro или Business?</h2>
+      <p>Три общих тарифа различаются составом и временем. Каждый действует <strong>только на покупателя</strong>, включая Business. Посмотреть сравнение в игре: <code>/blockbill plans</code>.</p>
+      <div class="table-wrap"><table><caption>Одна покупка добавляет время каждой включённой услуге</caption><thead><tr><th scope="col">Тариф</th><th scope="col">Состав</th><th scope="col">Время</th><th scope="col">Цена</th><th scope="col">Команда</th></tr></thead><tbody>
+        <tr><td>Plus</td><td>Mine+, Sleep+, Sprint+, Fish+, Storage+</td><td><strong class="price">15 минут</strong></td><td><strong class="price">90 кредитов</strong></td><td><code>/blockbill buy plus</code></td></tr>
+        <tr><td>Pro</td><td>Все девять услуг</td><td><strong class="price">30 минут</strong></td><td><strong class="price">300 кредитов</strong></td><td><code>/blockbill buy pro</code></td></tr>
+        <tr><td>Business</td><td>Все девять услуг</td><td><strong class="price">60 минут</strong></td><td><strong class="price">540 кредитов</strong></td><td><code>/blockbill buy business</code></td></tr>
+      </tbody></table></div>
+      <div class="columns"><div class="panel"><h3>Остаток времени складывается</h3><p>У каждой услуги свой срок. Покупка добавляет всю длительность поверх оставшегося пробного или оплаченного времени. Повторная покупка тоже добавляет время.</p><p>Например, Plus после Pro добавит ещё 15 минут Mine+, Sleep+, Sprint+, Fish+ и Storage+. Остальные четыре услуги сохранят прежний остаток. Проверяй сроки через <code>/blockbill status</code>.</p></div><div class="panel"><h3>Автопродление остаётся твоим выбором</h3><p>Покупка тарифа сохраняет прежние настройки. Включённые услуги по-прежнему продлеваются <strong>по отдельности на 10 минут по индивидуальной цене</strong>. Plus, Pro и Business целиком автоматически не покупаются.</p><p>Для покупки достаточно кредитов на весь тариф. Если их не хватает, ни один срок и баланс не меняются.</p></div></div>
+      <pre><code>/blockbill plans
+/blockbill buy plus
+/blockbill status</code></pre>
+    </section>
+
+    <section id="commands" aria-labelledby="commands-title">
+      <p class="eyebrow">05 / Шпаргалка</p><h2 id="commands-title">Команды под рукой</h2>
+      <div class="columns"><div class="panel"><h3>Посмотреть</h3><p><code class="command">/blockbill help</code>Краткая справка.</p><p><code class="command">/blockbill services</code>Девять услуг, правила и точные команды покупки.</p><p><code class="command">/blockbill plans</code>Сравнение Plus, Pro и Business.</p><p><code class="command">/blockbill status</code>Баланс, пробный период, сроки каждой услуги и флаги автопродления.</p><p><code class="command">/blockbill prices</code>Цены девяти услуг, четырёх пакетов, трёх тарифов и десяти вариантов обмена.</p></div><div class="panel"><h3>Обменять и продлить</h3><p><code class="command">/blockbill exchange coal 2</code>Обмен 16 угля на 32 кредита. Другие имена ресурсов — в таблице выше.</p><p><code class="command">/blockbill buy enchant</code>Купить Enchant+ на 10 минут. Другие ID: <code>mine</code>, <code>sleep</code>, <code>sprint</code>, <code>anvil</code>, <code>smith</code>, <code>trade</code>, <code>fish</code>, <code>storage</code>.</p><p><code class="command">/blockbill buy workshop</code>Продлить весь пакет мастерской на 10 минут.</p><p><code class="command">/blockbill buy pro</code>Добавить 30 минут всем девяти услугам.</p></div></div>
+    </section>
+
+    <section id="autorenew" aria-labelledby="autorenew-title">
+      <p class="eyebrow">06 / По желанию</p><h2 id="autorenew-title">Автопродление под твоим контролем</h2>
+      <div class="columns"><div><p><strong>По умолчанию выключено.</strong> Можно включить для каждой отдельной услуги. Например, чтобы Mine+ продлевалась сама:</p><pre><code>/blockbill autorenew mine on</code></pre><p>Отключить:</p><pre><code>/blockbill autorenew mine off</code></pre><p>Вместо <code>mine</code> можно указать любой из девяти ID услуг. Посмотреть настройки: <code>/blockbill status</code>. Менять их можно только в выживании, для своего счёта.</p></div><div class="panel"><h3>Как списываются кредиты</h3><p>При окончании доступа покупается один период <strong>на 10 минут по индивидуальной цене услуги</strong>. Во время trial списаний нет. Пакеты и тарифы автоматически не покупаются; их ручная покупка не меняет флаги автопродления.</p><p>Если денег или допустимого срока не хватает, автопродление этой услуги <strong>отключается</strong>. Повторных попыток не будет до явного включения. Уведомление покажет оплаченные и отключённые услуги, общую сумму и остаток.</p><p class="small muted">При одновременном истечении порядок оплаты: mine → sleep → sprint → enchant → anvil → smith → trade → fish → storage. При ограниченном балансе это влияет на то, какие услуги продлятся.</p></div></div>
+    </section>
+
+    <section id="rules" aria-labelledby="rules-title">
+      <p class="eyebrow">07 / Важные правила</p><h2 id="rules-title">Время идёт вместе с тобой</h2>
+      <div class="columns"><div>
+        <div class="rule"><h3>Только онлайн в выживании</h3><p>Пробный период — около 5 минут. Отдельные услуги и обычные пакеты добавляют 10 минут, Plus — 15, Pro — 30, Business — 60. Офлайн и в других режимах отсчёт и автопродление остановлены. При замедлении сервера минуты растягиваются.</p></div>
+        <div class="rule"><h3>Продлевай заранее</h3><p>Досрочная оплата сохраняет весь остаток времени. Перед окончанием приходит предупреждение. Автопродление срабатывает только для тех услуг, для которых ты сам его включил.</p></div>
+        <div class="rule"><h3>Смерть не обнуляет счёт</h3><p>Кредиты, сроки и настройки автопродления сохраняются после смерти, выхода и перезапуска мира. Новый вход не начинает бесплатный период заново. У каждого игрока отдельный счёт.</p></div>
+      </div><div>
+        <div class="rule"><h3>Пауза и инвентарь — разные вещи</h3><p>Обычный инвентарь не останавливает время. Справка и пауза одиночного мира останавливают его. В мультиплеере сервер продолжает работать, пока открыта справка.</p></div>
+        <div class="rule"><h3>Эффект проходит сам</h3><p>После оплаты уже наложенная усталость уйдёт в течение 3 секунд, замедление бега — 4 секунд. Эффекты зелий не снимаются принудительно. В creative и spectator новые ограничения не применяются.</p></div>
+        <div class="rule"><h3>Открытое окно остаётся открытым</h3><p>Новые услуги ограничивают начало взаимодействия. Истечение не закрывает интерфейс и не конфискует вещи. Можно сломать и подобрать контейнер по правилам Minecraft. Приседание для размещения блока рядом с платной станцией доступно.</p></div>
+        <div class="rule"><h3>Можно пройти и без подписок</h3><p>Обычные сундуки, бочки, верстаки, печи, ходьба, крафт, бой, порталы и финальная битва бесплатны. Обмен ресурсов работает только в выживании. Подписки добавляют удобство.</p></div>
+      </div></div>
+    </section>
+
+    <section id="faq" aria-labelledby="faq-title">
+      <p class="eyebrow">08 / Если возник вопрос</p><h2 id="faq-title">Ответы без мелкого шрифта</h2>
+      <details open><summary>Игра не видит команду или кнопку BlockBill</summary><p>Проверь, что запущен профиль Fabric для Minecraft 26.3, а оба JAR лежат в его папке <code>mods</code>. В другой папке профиля мод не загрузится. Перезапусти игру после установки. На сервере тоже должен быть установлен BlockBill.</p></details>
+      <details open><summary>Fabric сообщает о несовместимой зависимости</summary><p>Сверь версии: Minecraft 26.3, Loader 0.20.1, Fabric API 0.165.0+26.3 и Java 25+. Удали из папки <code>mods</code> старые дубликаты BlockBill и Fabric API, оставив одну нужную версию каждого. Не используй <code>-sources.jar</code>.</p></details>
+      <details open><summary>Почему не получается обменять ресурсы?</summary><p>Ты должен быть в выживании, а полный набор — лежать в твоём инвентаре. Предметы в сундуке не учитываются. Для <code>logs</code> нужны подходящие ванильные брёвна; доски не подходят. В конце команды укажи положительное целое число наборов.</p></details>
+      <details open><summary>Можно ли поставить точку возрождения без Sleep+?</summary><p>Да. Sleep+ ограничивает сон, но обычная кровать по-прежнему устанавливает точку возрождения по правилам Minecraft. Соломенная кровать точку возрождения не меняет и исчезает после использования — это её ванильное поведение.</p></details>
+      <details open><summary>Я оплатил Mine+, а добыча ещё замедлена</summary><p>Подожди до 3 секунд: уже наложенная усталость закончится. Для штрафа Sprint+ — до 4 секунд. Если эффект сохраняется дольше, проверь другие игровые причины: например, более сильную усталость от древнего стража.</p></details>
+      <details open><summary>Почему автопродление отключилось?</summary><p>Когда срок истёк, не удалось оплатить или добавить следующий период. Проверь <code>/blockbill status</code>, пополни баланс и включи нужную услугу снова: например, <code>/blockbill autorenew fish on</code>. Автоматических повторных попыток без твоей команды нет.</p></details>
+      <details open><summary>Почему прежний all теперь стоит 120?</summary><p>В 0.2 пакет <code>all</code> включает девять услуг. Прежние Mine+, Sleep+, Sprint+ доступны пакетом <code>basic</code> за прежние 40 кредитов. Старые оплаченные сроки сохраняются, но новые услуги к ним задним числом не добавляются.</p></details>
+      <details open><summary>Business распространяется на друзей?</summary><p>Business даёт покупателю все девять услуг на 60 минут. У каждого другого игрока свой счёт и сроки; общая подписка на команду не создаётся.</p></details>
+      <details open><summary>Можно после Pro купить Plus?</summary><p>Да. Каждая из пяти услуг Plus получит ещё 15 минут поверх своего остатка. Сроки остальных четырёх услуг сохранятся. Любые прежние настройки автопродления тоже останутся прежними.</p></details>
+      <details open><summary>Где посмотреть проверенные сценарии этой сборки?</summary><p>В проекте есть <a href="PROGRESS.md">отчёт о проверках</a>. Проверь версию в отчёте: он отдельно отмечает сборку, автоматические тесты и игровой запуск. Результаты прежних версий не подтверждают проверки 0.3. Стартовые цены ещё нуждаются в обычном плейтесте; наличие JAR само по себе не подтверждает баланс.</p></details>
+    </section>
+  </main>
+  <footer class="footer"><p><strong>BlockBill 0.3.1</strong> · Minecraft Java Edition 26.3 · Локальная инструкция, работает без интернета. Для скачивания установщика и Fabric API потребуется сеть.</p><p>Это не официальный продукт Minecraft. Не одобрено Mojang или Microsoft и не связано с ними.</p><p><a href="https://github.com/Hasuk1/BlockBill/releases/latest">Последний релиз</a> · <a href="#top">Вернуться наверх</a> · <a href="../README.md">README проекта</a></p></footer>
+</div>
+</body>
+</html>

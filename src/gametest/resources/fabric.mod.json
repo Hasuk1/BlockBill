@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "blockbill-test",
+  "version": "1.0.0",
+  "name": "BlockBill server integration tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "dev.blockbill.BlockBillGameTests",
+      "dev.blockbill.ExpansionGameTests",
+      "dev.blockbill.AccountExpansionGameTests",
+      "dev.blockbill.PlanGameTests",
+      "dev.blockbill.ReleaseGameTests"
+    ],
+    "fabric-client-gametest": [
+      "dev.blockbill.client.BlockBillGuideGameTest"
+    ],
+    "main": [
+      "dev.blockbill.RestartSmoke"
+    ]
+  },
+  "depends": {
+    "blockbill": "*",
+    "fabric-gametest-api-v1": "*"
+  }
+}

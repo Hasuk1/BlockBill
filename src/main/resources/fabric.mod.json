@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "blockbill",
+  "version": "${version}",
+  "name": "BlockBill",
+  "license": "CC0-1.0",
+  "contact": {
+    "sources": "https://github.com/Hasuk1/BlockBill",
+    "issues": "https://github.com/Hasuk1/BlockBill/issues"
+  },
+  "description": "Minecraft, but everyday conveniences require in-game subscriptions.",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.blockbill.BlockBillMod"
+    ],
+    "client": [
+      "dev.blockbill.client.BlockBillClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "26.3",
+    "java": ">=25",
+    "fabric-api": ">=0.165.0"
+  }
+}
