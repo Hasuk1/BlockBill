@@ -299,11 +299,11 @@ public final class BlockBillHubScreen extends Screen {
         graphics.fill(x, y, x + width, y + height, 0xFF373737);
         graphics.fill(x + 2, y + 2, x + width - 2, y + height - 2, 0xFFC6C6C6);
         for (Text text : texts) {
-            graphics.text(font, font.plainSubstrByWidth(text.value().getString(), text.maxWidth()), x + text.x(), y + text.y(), 0xFF303030);
+            graphics.text(font, font.plainSubstrByWidth(text.value().getString(), text.maxWidth()), x + text.x(), y + text.y(), 0xFF303030, false);
             if (mouseX >= x + text.x() && mouseX < x + text.x() + text.maxWidth() && mouseY >= y + text.y() && mouseY < y + text.y() + 10)
                 graphics.setTooltipForNextFrame(font, List.of(text.value()), java.util.Optional.empty(), mouseX, mouseY);
         }
-        for (Line line : lines) graphics.text(font, line.value(), x + line.x(), y + line.y(), 0xFF303030);
+        for (Line line : lines) graphics.text(font, line.value(), x + line.x(), y + line.y(), 0xFF303030, false);
         super.extractRenderState(graphics, mouseX, mouseY, delta);
         for (Icon icon : icons) { graphics.item(icon.stack(), x + icon.x(), y + icon.y()); graphics.itemDecorations(font, icon.stack(), x + icon.x(), y + icon.y()); }
     }

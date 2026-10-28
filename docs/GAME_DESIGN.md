@@ -1,4 +1,4 @@
-# Game Design Document — BlockBill 0.4.1
+# Game Design Document — BlockBill 0.4.2
 
 Текущий контракт — [V04_CONTRACT.md](V04_CONTRACT.md). Он заменяет мягкие неудобства 0.3 жёсткими правилами прохождения и разрешает игровой UI. Исторические расширения [EXPANSION_V02.md](EXPANSION_V02.md) и [PLANS_V03.md](PLANS_V03.md) описывают прежние версии.
 

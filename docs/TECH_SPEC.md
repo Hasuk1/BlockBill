@@ -1,4 +1,4 @@
-# Техническая спецификация BlockBill 0.4.1
+# Техническая спецификация BlockBill 0.4.2
 
 Текущие игровые правила — [GAME_DESIGN.md](GAME_DESIGN.md). Текущий UI и правила: [V04_CONTRACT.md](V04_CONTRACT.md), [PROGRESSION_API_V04.md](PROGRESSION_API_V04.md), [MARKET_PRICING.md](MARKET_PRICING.md). Исторические контракты расширений: [EXPANSION_V02.md](EXPANSION_V02.md), [PLANS_V03.md](PLANS_V03.md). Первоначальные промпты v0.1 сохранены в `prompts/` как история этапов.
 
@@ -12,7 +12,7 @@
 | Fabric Loom | 1.19.3, plugin `net.fabricmc.fabric-loom` |
 | Gradle Wrapper | 9.8.2; SHA-256 в wrapper properties |
 | Java toolchain | 25 |
-| Мод | BlockBill 0.4.1, modid `blockbill`, package `dev.blockbill` |
+| Мод | BlockBill 0.4.2, modid `blockbill`, package `dev.blockbill` |
 
 Официальная база: [Fabric example mod, ветка 26.3](https://github.com/FabricMC/fabric-example-mod/tree/26.3). Имена Minecraft необфусцированные; старые примеры Yarn не используются как контракт. Проверенные сигнатуры: [API_RESEARCH.md](API_RESEARCH.md), [API_V02.md](API_V02.md).
 
