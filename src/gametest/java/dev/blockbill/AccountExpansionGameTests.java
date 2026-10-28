@@ -129,7 +129,7 @@ public final class AccountExpansionGameTests {
         long[] prices = {40, 50, 50, 120};
         List<Set<ServiceType>> members = List.of(
                 Set.of(MINE, SLEEP, SPRINT), Set.of(ENCHANT, ANVIL, SMITH), Set.of(MINE, SPRINT, FISH, STORAGE),
-                Set.of(MINE, SLEEP, SPRINT, ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE));
+                Set.of(MINE, SLEEP, SPRINT, ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE, TRAVEL));
         for (int index = 0; index < bundles.length; index++) {
             ServerPlayer player = player(helper, GameType.SURVIVAL);
             try {
@@ -163,27 +163,32 @@ public final class AccountExpansionGameTests {
             Item[] items = {Items.COAL, Items.WHEAT, Items.COPPER_INGOT, Items.REDSTONE, Items.GOLD_INGOT, Items.EMERALD};
             String[] names = {"coal", "wheat", "copper_ingot", "redstone", "gold_ingot", "emerald"};
             int[] quantities = {8, 16, 8, 16, 4, 1};
-            long[] payments = {16, 12, 16, 20, 32, 28};
+            // Independent v0.4 catalog contract, in cents; legacy command quantities stay unchanged.
+            long[] payments = {200, 64, 720, 320, 1800, 250};
             player.getInventory().setItem(7, new ItemStack(Items.CHARCOAL, 64));
             helper.assertTrue(command(player, "blockbill exchange coal 1") == 0, "Charcoal incorrectly counted as coal");
             helper.assertTrue(player.getInventory().getItem(7).getCount() == 64 && account(player).credits() == 0,
                     "Rejected charcoal exchange mutated inventory or balance");
-            long expectedCredits = 0;
+            long expectedCents = 0;
             for (int index = 0; index < items.length; index++) {
                 player.getInventory().setItem(index, new ItemStack(items[index], quantities[index] - 1));
                 helper.assertTrue(command(player, "blockbill exchange " + names[index] + " 1") == 0,
                         "Incomplete bundle accepted for " + names[index]);
                 helper.assertTrue(player.getInventory().getItem(index).getCount() == quantities[index] - 1,
                         "Rejected exchange partially removed " + names[index]);
-                helper.assertTrue(account(player).credits() == expectedCredits, "Rejected exchange credited resources");
+                helper.assertTrue(account(player).credits() == expectedCents / 100
+                                && account(player).creditRemainder() == expectedCents % 100,
+                        "Rejected exchange changed whole or fractional balance");
                 player.getInventory().setItem(index, new ItemStack(items[index], quantities[index]));
                 helper.assertTrue(command(player, "blockbill exchange " + names[index] + " 1") == 1,
                         "Exact vanilla bundle failed for " + names[index]);
-                expectedCredits += payments[index];
-                helper.assertTrue(account(player).credits() == expectedCredits, "Wrong published rate for " + names[index]);
+                expectedCents += payments[index];
+                helper.assertTrue(account(player).credits() == expectedCents / 100
+                                && account(player).creditRemainder() == expectedCents % 100,
+                        "Legacy exchange bypassed the common market price for " + names[index]);
                 helper.assertTrue(player.getInventory().getItem(index).isEmpty(), "Exchange did not remove exact resources");
             }
-            helper.assertTrue(account(player).credits() == 124, "Six new offers must earn 124 credits together");
+            helper.assertTrue(account(player).formattedCredits().equals("33.54"), "Six market bundles must earn exactly 33.54 credits");
             helper.assertTrue(player.getInventory().getItem(7).getCount() == 64, "Exchange touched unrelated charcoal");
             helper.succeed();
         } finally {
@@ -208,11 +213,13 @@ public final class AccountExpansionGameTests {
         PlayerAccount account = decoded.account(uuid);
         PlayerAccount.Snapshot legacy = new PlayerAccount.Snapshot(uuid, 200, 10_000, 6_000, 18_000, 20_000, 22_000);
         helper.assertTrue(legacy.equals(account.snapshot()), "Loading old seven fields changed account state");
-        for (ServiceType service : List.of(ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE)) {
+        for (ServiceType service : List.of(ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE, TRAVEL)) {
             helper.assertTrue(account.paidUntil(service) == 0 && !SubscriptionEngine.hasAccess(account, service),
                     "Old world received a new license or restarted trial");
         }
         for (ServiceType service : ServiceType.values()) helper.assertTrue(!account.autoRenew(service), "Migration enabled automatic charges");
+        helper.assertTrue(account.creditRemainder() == 0 && account.adRemainingTicks() == 0 && account.adCooldownTicks() == 0,
+                "Old account migration granted fractional money or advertisement access");
 
         SubscriptionEngine.purchase(account, ENCHANT);
         SubscriptionEngine.purchase(account, STORAGE);

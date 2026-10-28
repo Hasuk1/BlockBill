@@ -24,6 +24,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -55,7 +56,8 @@ public final class BlockBillGameTests {
             first.getInventory().setItem(1, new ItemStack(Items.BIRCH_LOG, 5));
             first.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.SPRUCE_LOG, 4));
             helper.assertTrue(command(first, "blockbill exchange logs 1") == 1, "Mixed inventory/offhand logs exchange failed");
-            helper.assertTrue(account(first).credits() == 12, "One bundle must earn 12 credits");
+            helper.assertTrue(account(first).credits() == 12 && account(first).creditRemainder() == 0,
+                    "16 mixed logs at 0.75 each must earn exactly 12.00 credits");
             helper.assertTrue(first.getInventory().getItem(0).isEmpty(), "Oak logs were not removed");
             helper.assertTrue(first.getInventory().getItem(1).isEmpty(), "Birch logs were not removed");
             helper.assertTrue(first.getItemInHand(InteractionHand.OFF_HAND).isEmpty(), "Offhand logs were not removed");
@@ -64,7 +66,8 @@ public final class BlockBillGameTests {
             first.getInventory().setItem(0, new ItemStack(Items.OAK_LOG, 15));
             helper.assertTrue(command(first, "blockbill exchange logs 1") == 0, "Insufficient resources accepted");
             helper.assertTrue(first.getInventory().getItem(0).getCount() == 15, "Failed exchange partially removed logs");
-            helper.assertTrue(account(first).credits() == 12, "Failed exchange changed credits");
+            helper.assertTrue(account(first).credits() == 12 && account(first).creditRemainder() == 0,
+                    "Failed exchange changed whole or fractional credits");
 
             first.getInventory().setItem(0, new ItemStack(Items.OAK_LOG, 16));
             account(first).setCredits(Long.MAX_VALUE);
@@ -87,11 +90,14 @@ public final class BlockBillGameTests {
             helper.assertTrue(command(player, "blockbill exchange cobblestone 2") == 1, "Cobblestone exchange failed");
             helper.assertTrue(command(player, "blockbill exchange rotten_flesh 1") == 1, "Flesh exchange failed");
             helper.assertTrue(command(player, "blockbill exchange iron_ingot 1") == 1, "Iron exchange failed");
-            helper.assertTrue(account(player).credits() == 80, "Offer prices differ from 32 + 12 + 36");
+            helper.assertTrue(account(player).credits() == 12 && account(player).creditRemainder() == 52,
+                    "Market exchange must pay 64*0.05 + 8*0.04 + 4*2.25 = 12.52 credits");
+            helper.assertTrue(account(player).formattedCredits().equals("12.52"), "Fractional exchange balance formatted incorrectly");
             for (String count : List.of("0", "-1", "1000001", "2147483648")) {
                 helper.assertTrue(rejectedSyntax(player, "blockbill exchange logs " + count), "Invalid bundle count accepted: " + count);
             }
-            helper.assertTrue(account(player).credits() == 80, "Invalid arguments changed balance");
+            helper.assertTrue(account(player).credits() == 12 && account(player).creditRemainder() == 52,
+                    "Invalid arguments changed whole or fractional balance");
             helper.succeed();
         } finally {
             disconnect(player);
@@ -104,6 +110,7 @@ public final class BlockBillGameTests {
         try {
             PlayerAccount account = account(player);
             account.setCredits(39);
+            account.creditCents(99);
             PlayerAccount.Snapshot before = account.snapshot();
             helper.assertTrue(command(player, "blockbill buy basic") == 0, "Unaffordable bundle accepted");
             helper.assertTrue(before.equals(account.snapshot()), "Unaffordable bundle mutated account");
@@ -112,6 +119,7 @@ public final class BlockBillGameTests {
             helper.assertTrue(account.paidUntil(ServiceType.MINE) == 18000, "Purchase lost trial time");
             helper.assertTrue(command(player, "blockbill buy basic") == 1, "All Access purchase failed");
             helper.assertTrue(account.credits() == 0, "Purchase did not charge 20 + 40");
+            helper.assertTrue(account.creditRemainder() == 99, "Purchases discarded the existing fractional balance");
             helper.assertTrue(account.paidUntil(ServiceType.MINE) == 30000, "Mine renewal lost remaining paid time");
             helper.assertTrue(account.paidUntil(ServiceType.SLEEP) == 18000, "Sleep did not receive full period after trial");
             helper.assertTrue(account.paidUntil(ServiceType.SPRINT) == 18000, "Sprint did not receive full period after trial");
@@ -215,7 +223,7 @@ public final class BlockBillGameTests {
     }
 
     @GameTest(maxTicks = 200)
-    public void miningRestrictionPreservesForeignEffectsAndExpiresAfterPayment(GameTestHelper helper) {
+    public void hardMiningPreservesForeignEffectsAndLetsLegacyPenaltyExpire(GameTestHelper helper) {
         ServerPlayer unpaid = player(helper, GameType.SURVIVAL);
         ServerPlayer protectedPlayer = player(helper, GameType.SURVIVAL);
         ServerPlayer trial = player(helper, GameType.SURVIVAL);
@@ -225,9 +233,18 @@ public final class BlockBillGameTests {
             player.setPos(player.getX(), 20, player.getZ());
         }
         protectedPlayer.addEffect(new MobEffectInstance(MobEffects.MINING_FATIGUE, 600, 2));
+        // Simulate a short effect persisted from v0.3: v0.4 must let it expire without renewing it.
+        unpaid.addEffect(new MobEffectInstance(MobEffects.MINING_FATIGUE, 60, 0));
+        BlockPos local = helper.absolutePos(new BlockPos(2, 2, 2));
+        BlockPos deep = new BlockPos(local.getX(), 20, local.getZ());
         helper.runAfterDelay(45, () -> {
-            helper.assertTrue(unpaid.hasEffect(MobEffects.MINING_FATIGUE), "Unpaid mining below Y40 was unrestricted");
-            helper.assertTrue(unpaid.getEffect(MobEffects.MINING_FATIGUE).getAmplifier() == 0, "Wrong Mine+ fatigue level");
+            helper.getLevel().setBlockAndUpdate(deep, Blocks.STONE.defaultBlockState());
+            helper.assertTrue(!unpaid.gameMode.destroyBlock(deep), "Unpaid deep mining was not hard-blocked");
+            helper.assertTrue(helper.getLevel().getBlockState(deep).is(Blocks.STONE), "Denied mining removed block");
+            helper.assertTrue(trial.gameMode.destroyBlock(deep), "Trial player could not actually break deep block");
+            helper.assertTrue(unpaid.hasEffect(MobEffects.MINING_FATIGUE)
+                    && unpaid.getEffect(MobEffects.MINING_FATIGUE).getDuration() <= 15,
+                    "Hard gate refreshed or prematurely removed a legacy effect");
             helper.assertTrue(!trial.hasEffect(MobEffects.MINING_FATIGUE), "Trial player received fatigue");
             helper.assertTrue(protectedPlayer.getEffect(MobEffects.MINING_FATIGUE).getAmplifier() == 2,
                     "BlockBill replaced a stronger foreign effect");
@@ -235,10 +252,12 @@ public final class BlockBillGameTests {
             command(unpaid, "blockbill buy mine");
             account(protectedPlayer).setCredits(20);
             command(protectedPlayer, "blockbill buy mine");
+            helper.getLevel().setBlockAndUpdate(deep, Blocks.STONE.defaultBlockState());
+            helper.assertTrue(unpaid.gameMode.destroyBlock(deep), "Payment did not immediately unlock actual deep mining");
         });
         helper.runAfterDelay(115, () -> {
             try {
-                helper.assertTrue(!unpaid.hasEffect(MobEffects.MINING_FATIGUE), "Own short fatigue did not expire after purchase");
+                helper.assertTrue(!unpaid.hasEffect(MobEffects.MINING_FATIGUE), "Legacy short fatigue did not expire after purchase");
                 helper.assertTrue(protectedPlayer.hasEffect(MobEffects.MINING_FATIGUE)
                         && protectedPlayer.getEffect(MobEffects.MINING_FATIGUE).getAmplifier() == 2,
                         "Purchase removed another source's fatigue");
@@ -250,10 +269,11 @@ public final class BlockBillGameTests {
     }
 
     @GameTest(maxTicks = 330)
-    public void continuousSprintUsesServerTicksAndCooldown(GameTestHelper helper) {
+    public void repeatedSprintRequestsStayBlockedUntilPaymentAndStopAgainAtExpiry(GameTestHelper helper) {
         ServerPlayer unpaid = player(helper, GameType.SURVIVAL);
         ServerPlayer trial = player(helper, GameType.SURVIVAL);
         expireTrial(account(unpaid));
+        double walkingSpeed = unpaid.getAttributeValue(Attributes.MOVEMENT_SPEED);
         // A server mock has no keyboard packets. Keep its sprint intent true on each actual game tick.
         helper.onEachTick(() -> {
             unpaid.setSprinting(true);
@@ -261,15 +281,31 @@ public final class BlockBillGameTests {
             unpaid.getFoodData().setFoodLevel(20);
             trial.getFoodData().setFoodLevel(20);
         });
-        helper.runAfterDelay(100, () -> helper.assertTrue(!unpaid.hasEffect(MobEffects.SLOWNESS), "Sprint was penalized before 120 ticks"));
-        helper.runAfterDelay(125, () -> {
-            helper.assertTrue(unpaid.hasEffect(MobEffects.SLOWNESS), "Continuous sprint did not trigger Slowness");
-            helper.assertTrue(!trial.hasEffect(MobEffects.SLOWNESS), "Trial sprint was penalized");
+        helper.runAfterDelay(100, () -> {
+            helper.assertTrue(!unpaid.isSprinting(), "Repeated unpaid requests bypassed hard sprint gate");
+            helper.assertTrue(unpaid.getAttributeValue(Attributes.MOVEMENT_SPEED) == walkingSpeed,
+                    "Denied sprint retained a speed modifier");
+            helper.assertTrue(!unpaid.hasEffect(MobEffects.SLOWNESS), "Hard sprint gate added obsolete Slowness");
         });
-        helper.runAfterDelay(220, () -> helper.assertTrue(!unpaid.hasEffect(MobEffects.SLOWNESS), "Sprint cooldown reapplied effect too soon"));
+        helper.runAfterDelay(125, () -> {
+            helper.assertTrue(!unpaid.isSprinting(), "Unpaid runner started sprinting after old 120-tick threshold");
+            helper.assertTrue(!trial.hasEffect(MobEffects.SLOWNESS), "Trial sprint was penalized");
+            account(unpaid).setCredits(15);
+            helper.assertTrue(command(unpaid, "blockbill buy sprint") == 1, "Sprint purchase failed");
+            unpaid.setSprinting(true);
+            helper.assertTrue(unpaid.isSprinting() && unpaid.getAttributeValue(Attributes.MOVEMENT_SPEED) > walkingSpeed,
+                    "Payment did not restore vanilla sprint and speed");
+        });
+        helper.runAfterDelay(220, () -> {
+            helper.assertTrue(unpaid.isSprinting(), "Paid continuous sprint was interrupted");
+            while (SubscriptionEngine.hasAccess(account(unpaid), ServiceType.SPRINT)) account(unpaid).tick(true);
+        });
         helper.runAfterDelay(285, () -> {
             try {
-                helper.assertTrue(unpaid.hasEffect(MobEffects.SLOWNESS), "Continuous sprint did not resume penalty after cooldown");
+                helper.assertTrue(!unpaid.isSprinting(), "Expired sprint restarted despite repeated requests");
+                helper.assertTrue(unpaid.getAttributeValue(Attributes.MOVEMENT_SPEED) == walkingSpeed,
+                        "Expiry retained sprint speed modifier");
+                helper.assertTrue(!unpaid.hasEffect(MobEffects.SLOWNESS), "Expiry applied obsolete Slowness");
                 helper.assertTrue(!trial.hasEffect(MobEffects.SLOWNESS), "Trial sprint received an effect");
                 helper.succeed();
             } finally {

@@ -19,8 +19,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class ExpansionTest {
     @Test
     void publishedIndividualPricesAndOrderAreStable() {
-        assertArrayEquals(new ServiceType[]{MINE, SLEEP, SPRINT, ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE}, ServiceType.values());
-        assertArrayEquals(new long[]{20, 15, 15, 25, 20, 20, 20, 15, 15},
+        assertArrayEquals(new ServiceType[]{MINE, SLEEP, SPRINT, ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE, TRAVEL}, ServiceType.values());
+        assertArrayEquals(new long[]{20, 15, 15, 25, 20, 20, 20, 15, 15, 40},
                 java.util.Arrays.stream(ServiceType.values()).mapToLong(ServiceType::price).toArray());
         for (ServiceType service : ServiceType.values()) {
             PlayerAccount account = account(service.price(), 7_000);

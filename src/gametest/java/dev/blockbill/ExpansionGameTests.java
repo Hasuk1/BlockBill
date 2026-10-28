@@ -241,7 +241,9 @@ public final class ExpansionGameTests {
         TranslatableContents message = (TranslatableContents) fixture.denials().getFirst().getContents();
         Object[] arguments = message.getArgs();
         helper.assertTrue(arguments.length == 3 && arguments[1].equals(ServiceType.SMITH.price())
-                && arguments[2].equals("/blockbill buy smith"), "Denial omitted price or exact purchase command");
+                && arguments[2] instanceof Component path
+                && path.getContents() instanceof TranslatableContents destination
+                && destination.getKey().equals("blockbill.open_hub"), "Denial omitted price or inventory purchase path");
         helper.runAfterDelay(19, () -> {
             useBlock(fixture.player, pos);
             helper.assertTrue(fixture.denials().size() == 1, "Cooldown expired before 20 active ticks");

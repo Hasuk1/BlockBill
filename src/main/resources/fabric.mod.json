@@ -10,6 +10,7 @@
   },
   "description": "Minecraft, but everyday conveniences require in-game subscriptions.",
   "environment": "*",
+  "mixins": ["blockbill.mixins.json"],
   "entrypoints": {
     "main": [
       "dev.blockbill.BlockBillMod"

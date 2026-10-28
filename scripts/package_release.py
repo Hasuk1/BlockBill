@@ -37,8 +37,12 @@ def package():
         assert descriptor["version"] == version and descriptor["id"] == "blockbill"
         assert descriptor["license"] == "CC0-1.0"
         assert not any("GameTest" in name or "RestartSmoke" in name for name in archive.namelist())
-        for entry in ("dev/blockbill/BlockBillMod.class", "dev/blockbill/client/BlockBillClient.class"):
+        for entry in ("dev/blockbill/BlockBillMod.class", "dev/blockbill/client/BlockBillClient.class",
+                      "dev/blockbill/client/BlockBillHubScreen.class", "dev/blockbill/network/HubServer.class",
+                      "blockbill.mixins.json"):
             assert entry in archive.namelist(), entry
+        prices = json.loads(archive.read("assets/blockbill/item_prices.json"))["prices"]
+        assert len(prices) == 1657 and all(isinstance(value, int) and value > 0 for value in prices.values())
         en = json.loads(archive.read("assets/blockbill/lang/en_us.json"))
         ru = json.loads(archive.read("assets/blockbill/lang/ru_ru.json"))
         assert en.keys() == ru.keys()
@@ -51,12 +55,14 @@ def package():
     destination.mkdir(parents=True)
     shutil.copy2(jar, destination / jar_name)
     shutil.copy2(ROOT / "LICENSE", destination)
+    readme = (ROOT / "README.md").read_text().replace("docs/install.html", "install.html")
+    (destination / "README.md").write_text(readme.replace(f"build/libs/{jar_name}", jar_name))
     shutil.copytree(ROOT / "docs", destination / "docs", ignore=shutil.ignore_patterns("*.html"))
     html = (ROOT / "docs/install.html").read_text()
     html = html.replace(f"../build/libs/{jar_name}", jar_name)
     html = html.replace(f"https://github.com/Hasuk1/BlockBill/releases/download/v{version}/{jar_name}", jar_name)
     html = html.replace('href="PROGRESS.md"', 'href="docs/PROGRESS.md"')
-    html = html.replace('href="../README.md"', 'href="https://github.com/Hasuk1/BlockBill#readme"')
+    html = html.replace('href="../README.md"', 'href="README.md"')
     assert "<script" not in html.lower()
     (destination / "install.html").write_text(html)
     links = Links()
@@ -91,9 +97,9 @@ def package():
             assert sha256(archive.read(f"{destination.name}/{name}")).hexdigest() == expected
     # Convenience standalone assets for GitHub Releases.
     standalone = (ROOT / "docs/install.html").read_text()
-    standalone = standalone.replace('href="PROGRESS.md"',
-                                    'href="https://github.com/Hasuk1/BlockBill/blob/main/docs/PROGRESS.md"')
-    standalone = standalone.replace('href="../README.md"', 'href="https://github.com/Hasuk1/BlockBill#readme"')
+    standalone = standalone.replace(f"../build/libs/{jar_name}", jar_name)
+    standalone = standalone.replace('href="PROGRESS.md"', f'href="BlockBill-{version}/docs/PROGRESS.md"')
+    standalone = standalone.replace('href="../README.md"', f'href="BlockBill-{version}/README.md"')
     (destination.parent / "install.html").write_text(standalone)
     shutil.copy2(jar, destination.parent / jar_name)
     assets = [destination.parent / jar_name, zip_path, destination.parent / "install.html"]

@@ -9,7 +9,8 @@ public enum ServiceType {
     SMITH("smith", 20),
     TRADE("trade", 20),
     FISH("fish", 15),
-    STORAGE("storage", 15);
+    STORAGE("storage", 15),
+    TRAVEL("travel", 40);
 
     private final String id;
     private final long price;

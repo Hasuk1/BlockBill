@@ -93,7 +93,7 @@ public final class ServiceAccess {
         Long previous = LAST_DENIAL.get(player.getUUID());
         if (previous == null || now < previous || now - previous >= DENIAL_INTERVAL_TICKS) {
             serverPlayer.sendSystemMessage(Component.translatable("blockbill.access.denied",
-                    Component.translatable("blockbill.service." + service.id()), service.price(), "/blockbill buy " + service.id()));
+                    Component.translatable("blockbill.service." + service.id()), service.price(), Component.translatable("blockbill.open_hub")));
             LAST_DENIAL.put(player.getUUID(), now);
         }
         return InteractionResult.FAIL;

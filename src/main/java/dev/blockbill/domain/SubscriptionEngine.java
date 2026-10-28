@@ -12,12 +12,12 @@ public final class SubscriptionEngine {
     private SubscriptionEngine() { }
 
     public static boolean hasAccess(PlayerAccount account, ServiceType service) {
-        return account.activePlayTicks() < account.trialEndTick()
+        return account.adRemainingTicks() > 0 || account.activePlayTicks() < account.trialEndTick()
                 || account.activePlayTicks() < account.paidUntil(service);
     }
 
     public static long remainingTicks(PlayerAccount account, ServiceType service) {
-        return Math.max(0, Math.max(account.trialEndTick(), account.paidUntil(service)) - account.activePlayTicks());
+        return Math.max(account.adRemainingTicks(), Math.max(0, Math.max(account.trialEndTick(), account.paidUntil(service)) - account.activePlayTicks()));
     }
 
     public static long trialRemainingTicks(PlayerAccount account) {

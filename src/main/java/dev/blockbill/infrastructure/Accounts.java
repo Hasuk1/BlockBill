@@ -44,7 +44,10 @@ public final class Accounts extends SavedData {
             Codec.unboundedMap(Codec.STRING, NON_NEGATIVE_LONG).optionalFieldOf("extraPaidUntil", Map.of())
                     .forGetter(PlayerAccount.Snapshot::extraPaidUntil),
             Codec.STRING.listOf().xmap(Set::copyOf, List::copyOf).optionalFieldOf("autoRenew", Set.of())
-                    .forGetter(PlayerAccount.Snapshot::autoRenew)
+                    .forGetter(PlayerAccount.Snapshot::autoRenew),
+            Codec.intRange(0, 99).optionalFieldOf("creditRemainder", 0).forGetter(PlayerAccount.Snapshot::creditRemainder),
+            NON_NEGATIVE_LONG.optionalFieldOf("adUntil", 0L).forGetter(PlayerAccount.Snapshot::adUntilTick),
+            NON_NEGATIVE_LONG.optionalFieldOf("adReadyAt", 0L).forGetter(PlayerAccount.Snapshot::adReadyAtTick)
     ).apply(instance, PlayerAccount.Snapshot::new));
 
     public static final Codec<Accounts> CODEC = SNAPSHOT_CODEC.listOf().flatXmap(Accounts::decode,

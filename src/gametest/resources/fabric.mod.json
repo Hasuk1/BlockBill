@@ -10,7 +10,10 @@
       "dev.blockbill.ExpansionGameTests",
       "dev.blockbill.AccountExpansionGameTests",
       "dev.blockbill.PlanGameTests",
-      "dev.blockbill.ReleaseGameTests"
+      "dev.blockbill.ReleaseGameTests",
+      "dev.blockbill.ProgressionGameTests",
+      "dev.blockbill.MarketGameTests",
+      "dev.blockbill.HubGameTests"
     ],
     "fabric-client-gametest": [
       "dev.blockbill.client.BlockBillGuideGameTest"

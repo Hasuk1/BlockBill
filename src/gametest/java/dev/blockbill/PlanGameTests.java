@@ -26,10 +26,11 @@ import static dev.blockbill.domain.ServiceType.*;
 /** Contract values intentionally do not read prices/durations/contents from the implementation enum. */
 public final class PlanGameTests {
     private static final Set<ServiceType> PLUS_SERVICES = EnumSet.of(MINE, SLEEP, SPRINT, FISH, STORAGE);
+    private static final Set<ServiceType> ALL_SERVICES = Set.of(MINE, SLEEP, SPRINT, ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE, TRAVEL);
     private static final List<Plan> PLANS = List.of(
             new Plan("plus", 90, 18_000, PLUS_SERVICES),
-            new Plan("pro", 300, 36_000, EnumSet.allOf(ServiceType.class)),
-            new Plan("business", 540, 72_000, EnumSet.allOf(ServiceType.class)));
+            new Plan("pro", 300, 36_000, ALL_SERVICES),
+            new Plan("business", 540, 72_000, ALL_SERVICES));
 
     @GameTest
     public void eachPlanCommandChargesExactPriceAndAddsExactIncludedPeriods(GameTestHelper helper) {
@@ -38,8 +39,10 @@ public final class PlanGameTests {
             ServerPlayer other = player(helper, GameType.SURVIVAL);
             try {
                 account(buyer).setCredits(1000);
+                account(buyer).creditCents(37);
                 helper.assertTrue(command(buyer, "blockbill buy " + plan.id()) == 1, "Plan command failed: " + plan.id());
                 helper.assertTrue(account(buyer).credits() == 1000 - plan.price(), "Plan charged wrong price: " + plan.id());
+                helper.assertTrue(account(buyer).creditRemainder() == 37, "Plan purchase changed fractional credits");
                 for (ServiceType service : ServiceType.values()) {
                     long expected = plan.services().contains(service) ? 6000 + plan.ticks() : 0;
                     helper.assertTrue(account(buyer).paidUntil(service) == expected, "Plan duration/content mismatch: " + plan.id() + "/" + service);
@@ -87,6 +90,7 @@ public final class PlanGameTests {
             ServerPlayer buyer = player(helper, GameType.SURVIVAL);
             try {
                 account(buyer).setCredits(plan.price() - 1);
+                account(buyer).creditCents(99);
                 account(buyer).setAutoRenew(SLEEP, true);
                 PlayerAccount.Snapshot before = account(buyer).snapshot();
                 helper.assertTrue(command(buyer, "blockbill buy " + plan.id()) == 0, "Unaffordable plan accepted");
@@ -116,7 +120,7 @@ public final class PlanGameTests {
             try {
                 PlayerAccount.Snapshot base = account(buyer).snapshot();
                 Map<String, Long> extras = new HashMap<>(base.extraPaidUntil());
-                extras.put("storage", Long.MAX_VALUE);
+                extras.put(plan.id().equals("plus") ? "storage" : "travel", Long.MAX_VALUE);
                 PlayerAccount restored = PlayerAccount.restore(new PlayerAccount.Snapshot(base.uuid(), 1000, 0, 6000,
                         0, 0, 0, extras, Set.of("fish")));
                 seedSingleAccount(helper, restored);

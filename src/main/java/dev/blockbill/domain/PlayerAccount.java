@@ -14,6 +14,9 @@ public final class PlayerAccount {
     private final UUID uuid;
     private long credits;
     private long activePlayTicks;
+    private int creditRemainder;
+    private long adUntilTick;
+    private long adReadyAtTick;
     private final long trialEndTick;
     private final EnumMap<ServiceType, Long> paidUntil = new EnumMap<>(ServiceType.class);
     private final EnumSet<ServiceType> autoRenew = EnumSet.noneOf(ServiceType.class);
@@ -29,6 +32,9 @@ public final class PlayerAccount {
         uuid = snapshot.uuid();
         credits = snapshot.credits();
         activePlayTicks = snapshot.activePlayTicks();
+        creditRemainder = snapshot.creditRemainder();
+        adUntilTick = snapshot.adUntilTick();
+        adReadyAtTick = snapshot.adReadyAtTick();
         trialEndTick = snapshot.trialEndTick();
         paidUntil.put(ServiceType.MINE, snapshot.paidUntilMine());
         paidUntil.put(ServiceType.SLEEP, snapshot.paidUntilSleep());
@@ -57,13 +63,45 @@ public final class PlayerAccount {
         Set<String> renew = new HashSet<>(passthroughAutoRenew);
         for (ServiceType service : autoRenew) renew.add(service.id());
         return new Snapshot(uuid, credits, activePlayTicks, trialEndTick,
-                paidUntil(ServiceType.MINE), paidUntil(ServiceType.SLEEP), paidUntil(ServiceType.SPRINT), extras, renew);
+                paidUntil(ServiceType.MINE), paidUntil(ServiceType.SLEEP), paidUntil(ServiceType.SPRINT), extras, renew,
+                creditRemainder, adUntilTick, adReadyAtTick);
     }
 
     public UUID uuid() { return uuid; }
     public long credits() { return credits; }
     public long activePlayTicks() { return activePlayTicks; }
     public long trialEndTick() { return trialEndTick; }
+    public int creditRemainder() { return creditRemainder; }
+    public long adUntilTick() { return adUntilTick; }
+    public long adReadyAtTick() { return adReadyAtTick; }
+    public long adRemainingTicks() { return Math.max(0, adUntilTick - activePlayTicks); }
+    public long adCooldownTicks() { return Math.max(0, adReadyAtTick - activePlayTicks); }
+    public String formattedCredits() { return credits + "." + (creditRemainder < 10 ? "0" : "") + creditRemainder; }
+
+    /** Check overflow without modifying money; used before any inventory mutation. */
+    public boolean canCreditCents(long cents) {
+        requireNonNegative(cents);
+        try {
+            Math.addExact(credits, cents / 100 + (creditRemainder + cents % 100) / 100);
+            return true;
+        } catch (ArithmeticException exception) { return false; }
+    }
+
+    public void creditCents(long cents) {
+        requireNonNegative(cents);
+        long fractional = creditRemainder + cents % 100;
+        long next = Math.addExact(credits, cents / 100 + fractional / 100);
+        credits = next;
+        creditRemainder = (int) (fractional % 100);
+    }
+
+    /** Called only after a server-validated five-second watch. One grant, persisted cooldown. */
+    public boolean grantAdvertisement() {
+        if (adCooldownTicks() > 0 || activePlayTicks > Long.MAX_VALUE - 1800) return false;
+        adUntilTick = activePlayTicks + 600;
+        adReadyAtTick = activePlayTicks + 1800;
+        return true;
+    }
 
     public long paidUntil(ServiceType service) {
         return paidUntil.getOrDefault(Objects.requireNonNull(service), 0L);
@@ -116,7 +154,15 @@ public final class PlayerAccount {
 
     public record Snapshot(UUID uuid, long credits, long activePlayTicks, long trialEndTick,
                            long paidUntilMine, long paidUntilSleep, long paidUntilSprint,
-                           Map<String, Long> extraPaidUntil, Set<String> autoRenew) {
+                           Map<String, Long> extraPaidUntil, Set<String> autoRenew,
+                           int creditRemainder, long adUntilTick, long adReadyAtTick) {
+        /** v0.2/v0.3 snapshots have no fractional money or advertising state. */
+        public Snapshot(UUID uuid, long credits, long activePlayTicks, long trialEndTick,
+                        long paidUntilMine, long paidUntilSleep, long paidUntilSprint,
+                        Map<String, Long> extraPaidUntil, Set<String> autoRenew) {
+            this(uuid, credits, activePlayTicks, trialEndTick, paidUntilMine, paidUntilSleep, paidUntilSprint,
+                    extraPaidUntil, autoRenew, 0, 0, 0);
+        }
         /** Reads v0.1 state without issuing new trial time, new licenses, or automatic purchases. */
         public Snapshot(UUID uuid, long credits, long activePlayTicks, long trialEndTick,
                         long paidUntilMine, long paidUntilSleep, long paidUntilSprint) {
@@ -132,6 +178,9 @@ public final class PlayerAccount {
             requireNonNegative(paidUntilMine);
             requireNonNegative(paidUntilSleep);
             requireNonNegative(paidUntilSprint);
+            if (creditRemainder < 0 || creditRemainder > 99) throw new IllegalArgumentException("Invalid credit remainder");
+            requireNonNegative(adUntilTick);
+            requireNonNegative(adReadyAtTick);
             extraPaidUntil = Map.copyOf(extraPaidUntil);
             autoRenew = Set.copyOf(autoRenew);
             extraPaidUntil.values().forEach(PlayerAccount::requireNonNegative);

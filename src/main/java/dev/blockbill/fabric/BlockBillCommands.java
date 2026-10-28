@@ -5,6 +5,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.LongArgumentType;
 import dev.blockbill.domain.ExchangeOffer;
 import dev.blockbill.domain.ExchangeService;
+import dev.blockbill.market.MarketSales;
 import dev.blockbill.domain.PlayerAccount;
 import dev.blockbill.domain.ServiceType;
 import dev.blockbill.domain.SubscriptionEngine;
@@ -78,10 +79,7 @@ public final class BlockBillCommands {
         for (SubscriptionBundle bundle : SubscriptionBundle.values()) {
             showBundle(source, bundle);
         }
-        for (ExchangeOffer offer : ExchangeOffer.values()) {
-            source.sendSystemMessage(Component.translatable("blockbill.prices.exchange", offer.id(),
-                    offer.itemsPerBundle(), offer.creditsPerBundle()));
-        }
+        source.sendSystemMessage(Component.translatable("hub.legacy.market"));
         return 1;
     }
 
@@ -125,7 +123,7 @@ public final class BlockBillCommands {
 
     private static int status(ServerPlayer player) {
         PlayerAccount account = Accounts.get(player.level().getServer()).account(player.getUUID());
-        player.sendSystemMessage(Component.translatable("blockbill.status.balance", account.credits()));
+        player.sendSystemMessage(Component.translatable("blockbill.status.balance", account.formattedCredits()));
         player.sendSystemMessage(Component.translatable("blockbill.status.trial", time(SubscriptionEngine.trialRemainingTicks(account))));
         for (ServiceType service : ServiceType.values()) {
             player.sendSystemMessage(Component.translatable("blockbill.status.service", name(service),
@@ -147,7 +145,7 @@ public final class BlockBillCommands {
         accounts.setDirty();
         player.sendSystemMessage(Component.translatable("blockbill.buy.success",
                 bundle != null ? Component.translatable("blockbill.bundle." + bundle.id()) : name(service),
-                bundle != null ? bundle.durationMinutes() : SubscriptionEngine.PERIOD_TICKS / 1200, account.credits()));
+                bundle != null ? bundle.durationMinutes() : SubscriptionEngine.PERIOD_TICKS / 1200, account.formattedCredits()));
         return 1;
     }
 
@@ -155,14 +153,14 @@ public final class BlockBillCommands {
         if (!survival(player)) return 0;
         Accounts accounts = Accounts.get(player.level().getServer());
         PlayerAccount account = accounts.account(player.getUUID());
-        TransactionResult result = ExchangeService.exchange(account, offer, bundles, new PlayerInventory(player), true);
+        TransactionResult result = MarketSales.exchange(player, account, offer, bundles);
         if (result != TransactionResult.SUCCESS) return failure(player, result);
         accounts.setDirty();
         player.getInventory().setChanged();
         player.inventoryMenu.broadcastChanges();
         player.containerMenu.broadcastChanges();
-        player.sendSystemMessage(Component.translatable("blockbill.exchange.success",
-                (long) offer.itemsPerBundle() * bundles, offer.id(), (long) offer.creditsPerBundle() * bundles, account.credits()));
+        player.sendSystemMessage(Component.translatable("hub.sale.success"));
+        player.sendSystemMessage(Component.translatable("blockbill.status.balance", account.formattedCredits()));
         return 1;
     }
 

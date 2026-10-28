@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import dev.blockbill.fabric.BlockBillCommands;
 import dev.blockbill.fabric.BlockBillEvents;
 import dev.blockbill.fabric.ServiceAccess;
+import dev.blockbill.fabric.ProgressionAccess;
+import dev.blockbill.network.HubServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +19,8 @@ public final class BlockBillMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, context, environment) -> BlockBillCommands.register(dispatcher));
         new BlockBillEvents().register();
         ServiceAccess.register();
+        ProgressionAccess.register();
+        HubServer.register();
         LOGGER.info("BlockBill initialized: in-game subscriptions only.");
     }
 }

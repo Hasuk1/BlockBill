@@ -144,7 +144,7 @@ public final class ReleaseGameTests {
     }
 
     @GameTest(maxTicks = 30)
-    public void renewalRunsBeforeMiningPenaltyAndServiceChecksAtTheSameBoundary(GameTestHelper helper) {
+    public void renewalRunsBeforeHardMiningAndServiceChecksAtTheSameBoundary(GameTestHelper helper) {
         ServerPlayer funded = player(helper, GameType.SURVIVAL);
         ServerPlayer limited = player(helper, GameType.SURVIVAL);
         ServerPlayer unpaid = player(helper, GameType.SURVIVAL);
@@ -170,9 +170,16 @@ public final class ReleaseGameTests {
                         "Renewal order did not prioritize Mine before Enchant");
                 helper.assertTrue(account(limited).autoRenew(MINE) && !account(limited).autoRenew(ENCHANT),
                         "Partial budget did not preserve successful flag and disable failed one");
-                helper.assertTrue(!funded.hasEffect(MobEffects.MINING_FATIGUE) && !limited.hasEffect(MobEffects.MINING_FATIGUE),
-                        "Renewed Mine+ received a boundary penalty");
-                helper.assertTrue(unpaid.hasEffect(MobEffects.MINING_FATIGUE), "Unpaid control missed boundary penalty");
+                BlockPos ore = table.east();
+                for (ServerPlayer miner : List.of(funded, limited, unpaid)) {
+                    miner.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.NETHERITE_PICKAXE));
+                    helper.getLevel().setBlockAndUpdate(ore, Blocks.DIAMOND_ORE.defaultBlockState());
+                    helper.assertTrue(miner.gameMode.destroyBlock(ore) == (miner != unpaid),
+                            "Hard mining did not immediately honor the exact renewal boundary");
+                    helper.assertTrue(!miner.hasEffect(MobEffects.MINING_FATIGUE), "Hard mining applied obsolete boundary fatigue");
+                }
+                helper.assertTrue(helper.getLevel().getBlockState(ore).is(Blocks.DIAMOND_ORE)
+                        && unpaid.getMainHandItem().getDamageValue() == 0, "Unpaid control lost block or tool durability");
                 funded.setPos(table.getX(), table.getY(), table.getZ() + 1);
                 limited.setPos(table.getX(), table.getY(), table.getZ() + 1);
                 useTable(funded, table, InteractionHand.MAIN_HAND);
@@ -192,24 +199,32 @@ public final class ReleaseGameTests {
         JsonObject valid = validRecord(UUID.randomUUID());
         List<JsonArray> invalid = new ArrayList<>();
         for (String field : List.of("credits", "activeTicks", "trialEnd", "mineUntil", "sleepUntil", "sprintUntil")) {
-            JsonObject corrupt = valid.deepCopy();
+            JsonObject corrupt = otherRecord(valid);
             corrupt.addProperty(field, -1L);
             invalid.add(records(valid, corrupt));
         }
-        JsonObject badUuid = valid.deepCopy();
+        JsonObject badUuid = otherRecord(valid);
         badUuid.addProperty("uuid", "not-a-uuid");
         invalid.add(records(valid, badUuid));
-        JsonObject missing = valid.deepCopy();
+        JsonObject missing = otherRecord(valid);
         missing.remove("credits");
         invalid.add(records(valid, missing));
-        JsonObject badExtras = valid.deepCopy();
+        JsonObject badExtras = otherRecord(valid);
         JsonObject extras = new JsonObject();
         extras.addProperty("fish", -1);
         badExtras.add("extraPaidUntil", extras);
         invalid.add(records(valid, badExtras));
-        JsonObject badFlags = valid.deepCopy();
+        JsonObject badFlags = otherRecord(valid);
         badFlags.addProperty("autoRenew", 42);
         invalid.add(records(valid, badFlags));
+        for (String field : List.of("creditRemainder", "adUntil", "adReadyAt")) {
+            JsonObject corrupt = otherRecord(valid);
+            corrupt.addProperty(field, -1);
+            invalid.add(records(valid, corrupt));
+        }
+        JsonObject badRemainder = otherRecord(valid);
+        badRemainder.addProperty("creditRemainder", 100);
+        invalid.add(records(valid, badRemainder));
         invalid.add(records(valid, valid));
         try {
             for (JsonArray corrupt : invalid) {
@@ -240,6 +255,8 @@ public final class ReleaseGameTests {
                 accounts.account(uuid).setCredits(540);
                 SubscriptionEngine.purchaseBundle(accounts.account(uuid), dev.blockbill.domain.SubscriptionBundle.BUSINESS);
                 accounts.account(uuid).setAutoRenew(ServiceType.FISH, true);
+                accounts.account(uuid).creditCents(37);
+                accounts.account(uuid).grantAdvertisement();
                 expected = accounts.account(uuid).snapshot();
                 // A different path on subsequent calls must not trigger another disk read or reset this storage.
                 helper.assertTrue(accounts == Accounts.load(storage, directory.resolve("unused")), "Loader did not cache world identity");
@@ -298,6 +315,12 @@ public final class ReleaseGameTests {
         JsonArray array = new JsonArray();
         for (JsonObject record : records) array.add(record.deepCopy());
         return array;
+    }
+
+    private static JsonObject otherRecord(JsonObject valid) {
+        JsonObject result = valid.deepCopy();
+        result.addProperty("uuid", UUID.randomUUID().toString());
+        return result;
     }
 
     private static void expireTrial(PlayerAccount account) {

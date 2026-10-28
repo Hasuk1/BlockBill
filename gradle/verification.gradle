@@ -31,9 +31,10 @@ tasks.register('productionServerSmoke', productionServerTaskType) {
     // Verified against https://meta.fabricmc.net/v2/versions/installer on 2026-10-27.
     installerVersion = '1.1.2'
     mods.from tasks.named('verificationJar')
-    runDir = file(providers.gradleProperty('smokeRunDir').getOrElse('.local/production-smoke-v031'))
+    runDir = file(providers.gradleProperty('smokeRunDir').getOrElse('.local/production-smoke-v04'))
     javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
     jvmArgs.add(providers.gradleProperty('restartPhase').map { "-Dblockbill.restartPhase=${it}" })
+    jvmArgs.add(providers.gradleProperty('smokeScenario').orElse('fresh').map { "-Dblockbill.smokeScenario=${it}" })
     doFirst {
         def phase = providers.gradleProperty('restartPhase').getOrElse('')
         if (!(phase in ['write', 'read'])) throw new GradleException('Use -PrestartPhase=write or -PrestartPhase=read')

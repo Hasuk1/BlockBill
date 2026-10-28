@@ -28,15 +28,18 @@ import java.util.UUID;
 public final class RestartSmoke implements ModInitializer {
     private static final UUID FIRST = UUID.fromString("6ffba4c3-ecdd-41c2-957e-d10ea6045751");
     private static final UUID SECOND = UUID.fromString("ac29510f-f674-48b0-b487-18436d932473");
-    private static final PlayerAccount.Snapshot LEGACY_FIRST = new PlayerAccount.Snapshot(FIRST, 83, 6042, 6000, 18042, 18042, 18042);
-    private static final PlayerAccount.Snapshot V02_FIRST = new PlayerAccount.Snapshot(FIRST, 880, 6042, 6000,
-            30042, 30042, 30042,
-            Map.of("enchant", 18042L, "anvil", 18042L, "smith", 18042L, "trade", 18042L, "fish", 18042L, "storage", 18042L),
-            Set.of("enchant", "fish"));
-    private static final PlayerAccount.Snapshot FIRST_EXPECTED = new PlayerAccount.Snapshot(FIRST, 70, 6042, 6000,
+    private static final PlayerAccount.Snapshot V03_FIRST = new PlayerAccount.Snapshot(FIRST, 70, 6042, 6000,
             156042, 156042, 156042,
             Map.of("enchant", 126042L, "anvil", 126042L, "smith", 126042L, "trade", 126042L,
                     "fish", 144042L, "storage", 144042L), Set.of("enchant", "fish"));
+    private static final PlayerAccount.Snapshot UPGRADE_EXPECTED = new PlayerAccount.Snapshot(FIRST, 30, 6042, 6000,
+            156042, 156042, 156042,
+            Map.of("enchant", 126042L, "anvil", 126042L, "smith", 126042L, "trade", 126042L,
+                    "fish", 144042L, "storage", 144042L, "travel", 18042L), Set.of("enchant", "fish"), 37, 6642, 7842);
+    private static final PlayerAccount.Snapshot FRESH_EXPECTED = new PlayerAccount.Snapshot(FIRST, 700, 0, 6000,
+            42000, 42000, 42000,
+            Map.of("enchant", 42000L, "anvil", 42000L, "smith", 42000L, "trade", 42000L,
+                    "fish", 42000L, "storage", 42000L, "travel", 42000L), Set.of(), 37, 600, 1800);
     private static final PlayerAccount.Snapshot SECOND_EXPECTED = new PlayerAccount.Snapshot(SECOND, 7, 123, 6000, 0, 0, 0);
     private Evidence evidence;
 
@@ -71,39 +74,30 @@ public final class RestartSmoke implements ModInitializer {
             Accounts accounts = Accounts.get(server);
             PlayerAccount first = accounts.account(FIRST);
             PlayerAccount second = accounts.account(SECOND);
+            boolean upgrade = System.getProperty("blockbill.smokeScenario", "fresh").equals("upgrade");
+            PlayerAccount.Snapshot expected = upgrade ? UPGRADE_EXPECTED : FRESH_EXPECTED;
             if (phase.equals("write")) {
-                // Repeating the write phase is safe only when the earlier fixture is identical.
-                // Never silently reset an account or any real player's state.
-                if (first.snapshot().equals(new PlayerAccount(FIRST).snapshot())) {
-                    for (int tick = 0; tick < 6042; tick++) first.tick(true);
-                    first.setCredits(123);
-                    require(SubscriptionEngine.purchaseBundle(first, SubscriptionBundle.BASIC) == TransactionResult.SUCCESS,
-                            "Could not seed legacy-compatible fixture");
+                if (!first.snapshot().equals(expected)) {
+                    if (upgrade) {
+                        require(first.snapshot().equals(V03_FIRST), "Upgrade changed existing v0.3 wallet, licenses, trial or flags");
+                        require(first.paidUntil(ServiceType.TRAVEL) == 0 && first.adRemainingTicks() == 0,
+                                "Upgrade granted new services or advertising without consent");
+                        first.creditCents(37);
+                        require(SubscriptionEngine.purchase(first, ServiceType.TRAVEL) == TransactionResult.SUCCESS, "Travel purchase failed");
+                    } else {
+                        require(first.snapshot().equals(new PlayerAccount(FIRST).snapshot()), "Fresh fixture was not empty");
+                        first.creditCents(100037);
+                        require(SubscriptionEngine.purchaseBundle(first, SubscriptionBundle.PRO) == TransactionResult.SUCCESS, "Pro purchase failed");
+                    }
+                    require(first.grantAdvertisement(), "Advertisement grant failed");
                 }
                 if (second.snapshot().equals(new PlayerAccount(SECOND).snapshot())) {
                     for (int tick = 0; tick < 123; tick++) second.tick(true);
                     second.setCredits(7);
                 }
-                if (!first.snapshot().equals(V02_FIRST) && !first.snapshot().equals(FIRST_EXPECTED)) {
-                    require(first.snapshot().equals(LEGACY_FIRST), "v0.1 migration changed existing wallet/trial/licenses");
-                    for (ServiceType service : ServiceType.values()) {
-                        require(!first.autoRenew(service), "Migration enabled automatic spending");
-                    }
-                    first.setCredits(1000);
-                    require(SubscriptionEngine.purchaseAll(first) == TransactionResult.SUCCESS, "Could not purchase all nine services");
-                    first.setAutoRenew(ServiceType.ENCHANT, true);
-                    first.setAutoRenew(ServiceType.FISH, true);
-                }
-                if (!first.snapshot().equals(FIRST_EXPECTED)) {
-                    require(first.snapshot().equals(V02_FIRST), "v0.2 migration changed wallet, licenses or autorenew settings");
-                    first.setCredits(1000);
-                    require(SubscriptionEngine.purchaseBundle(first, SubscriptionBundle.PLUS) == TransactionResult.SUCCESS, "Plus failed");
-                    require(SubscriptionEngine.purchaseBundle(first, SubscriptionBundle.PRO) == TransactionResult.SUCCESS, "Pro failed");
-                    require(SubscriptionEngine.purchaseBundle(first, SubscriptionBundle.BUSINESS) == TransactionResult.SUCCESS, "Business failed");
-                }
                 accounts.setDirty();
             }
-            require(first.snapshot().equals(FIRST_EXPECTED), "First persisted UUID differs: " + first.snapshot());
+            require(first.snapshot().equals(expected), "First persisted UUID differs: " + first.snapshot());
             require(second.snapshot().equals(SECOND_EXPECTED), "Second persisted UUID differs: " + second.snapshot());
             String sha256 = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(source)));
             evidence = new Evidence(phase, ProcessHandle.current().pid(), source.toUri().toString(), sha256,

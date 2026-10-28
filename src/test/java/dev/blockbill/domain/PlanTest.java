@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PlanTest {
     private static final Set<ServiceType> PLUS_SERVICES = Set.of(MINE, SLEEP, SPRINT, FISH, STORAGE);
-    private static final Set<ServiceType> ALL_SERVICES = Set.of(MINE, SLEEP, SPRINT, ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE);
+    private static final Set<ServiceType> ALL_SERVICES = Set.of(MINE, SLEEP, SPRINT, ENCHANT, ANVIL, SMITH, TRADE, FISH, STORAGE, TRAVEL);
 
     @Test
     void threePlansMatchThePublishedPriceDurationAndComposition() {
